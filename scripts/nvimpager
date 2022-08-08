@@ -1,16 +1,13 @@
 #!/usr/bin/env bash
 
-# Copyright (c) 2017 Lucas Hoffmann
-# Licenced under a BSD-2-clause licence.    See the LICENSE file.
-
-RUNTIME="${BASH_SOURCE%/*}"
+RUNTIME='/Users/maksimov/Dropbox/Library/dotfiles.localized/.local/share/nvim/site/pack/packer/opt/nvimpager,/Users/maksimov/Dropbox/Library/dotfiles.localized/.local/share/nvim/site/pack/packer/opt,/Users/maksimov/.config/nvim,/Users/maksimov/.config/nvim/lua,/Users/maksimov/Dropbox/Library/dotfiles.localized/.local/share/nvim/site/pack/packer/opt/nvimpager/lua'
 PARENT="$PPID"
-export RUNTIME
-export PARENT
+
+export RUNTIME PARENT
 
 name='nvimpager'
 mode='auto'
-rc="${XDG_CONFIG_HOME:-~/.local/share/nvim/site/pack/packer/opt}/nvimpager/lua/nvimpager/init.lua"
+rc="${XDG_CONFIG_HOME:-$HOME/.config}/nvim/init.lua"
 nvim="${NVIM:-nvim}"
 
 usage () {
@@ -18,16 +15,17 @@ usage () {
     echo "             ${0##*/} -h"
     echo "             ${0##*/} -v"
 }
+
 description () {
     cat <<-EOF
 
     $name provides a simple pager based on neovim.
         Options:
-            -h		this help
-            -v		version output
-            -a		enforce auto mode (default)
-            -c		enforce cat mode
-            -p		enforce pager mode
+            -h        this help
+            -v        version output
+            -a        enforce auto mode (default)
+            -c        enforce cat mode
+            -p        enforce pager mode
             -m      enforce man mode
 
         All further arguments are passed to neovim.    But one has to add "--"
@@ -58,6 +56,7 @@ while getopts achpmv flag; do
         *) usage >&2; exit 2;;
     esac
 done
+
 shift $((OPTIND - 1))
 
 # Display the usage text if no arguments where given and stdin is a tty.
@@ -72,7 +71,7 @@ if [[ ! -t 1 && $mode = auto ]]; then
 fi
 
 if [[ ! -r $rc ]]; then
-    rc=NORC
+    rc='NORC'
 fi
 
 # Collect all file arguments until the first non file into $files.    If one non
@@ -89,8 +88,8 @@ while [[ $# -gt 0 ]]; do
         files+=("$stdin")
         shift
     else
-        if [[ $mode = auto ]]; then
-            mode=pager
+        if [[ $mode == 'auto' ]]; then
+            mode='pager'
         fi
         break
     fi
@@ -112,22 +111,20 @@ if [[ $mode = 'man' ]]; then
     args1=( '+Man!' )
     $nvim "${args1[@]}" "${files[@]}" </dev/tty
 else
-	# these come before all user supplied -c and --cmd arguments
-	args1=(
-		-R
-		${rc:+-u "$rc"}
-		--cmd 'set rtp+=$RUNTIME | lua nvimpager = require("nvimpager")'
-	)
-	# these come after all user supplied -c and --cmd arguments
-	args2=(
-		--cmd 'lua nvimpager.stage1()'
-		-c 'lua nvimpager.stage2()'
-	)
-	# Switch to cat mode if all files combined are shorter than the terminal
-	# height.
-	if [[ $mode = cat || $mode = auto && $(cat "${files[@]}" | wc -l) -le $(tput lines) ]]; then
-		args1+=(--headless)
-	fi
+    args1=(
+        -R
+        --cmd "let g:loaded_nvimpager = 1 | set rtp+=$RUNTIME | lua nvimpager = require('nvimpager')"
+    )
+    args2=(
+        -c 'lua nvimpager.stage1()'
+        -c 'lua nvimpager.stage2()'
+    )
 
-	$nvim "${args1[@]}" "${files[@]}" "$@" "${args2[@]}" </dev/tty
+    if [[ $mode == 'cat' || $mode == 'auto' ]]; then
+		if [[ $(cat "${files[@]}" | wc -l) -le $(tput lines) ]]; then
+            args1+=(--headless)
+		fi
+    fi
+
+    $nvim "${args1[@]}" "${files[@]}" "$@" "${args2[@]}" </dev/tty
 fi
