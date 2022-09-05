@@ -1,8 +1,7 @@
 #!/usr/bin/env bash
 
-RUNTIME='/Users/maksimov/Dropbox/Library/dotfiles.localized/.local/share/nvim/site/pack/packer/opt/nvimpager,/Users/maksimov/Dropbox/Library/dotfiles.localized/.local/share/nvim/site/pack/packer/opt,/Users/maksimov/.config/nvim,/Users/maksimov/.config/nvim/lua,/Users/maksimov/Dropbox/Library/dotfiles.localized/.local/share/nvim/site/pack/packer/opt/nvimpager/lua'
+RUNTIME="$HOME/.local/share/nvim/site/pack/packer/opt/nvimpager,$HOME/.local/share/nvim/site/pack/packer/opt,$HOME/.config/nvim,$HOME/.config/nvim/lua,$HOME/.local/share/nvim/site/pack/packer/opt/nvimpager/lua"
 PARENT="$PPID"
-
 export RUNTIME PARENT
 
 name='nvimpager'
@@ -10,13 +9,13 @@ mode='auto'
 rc="${XDG_CONFIG_HOME:-$HOME/.config}/nvim/init.lua"
 nvim="${NVIM:-nvim}"
 
-usage () {
+function usage() {
     echo "Usage: ${0##*/} [-acpm] [--] [nvim options and files]"
     echo "             ${0##*/} -h"
     echo "             ${0##*/} -v"
 }
 
-description () {
+function description() {
     cat <<-EOF
 
     $name provides a simple pager based on neovim.
@@ -26,14 +25,14 @@ description () {
             -a        enforce auto mode (default)
             -c        enforce cat mode
             -p        enforce pager mode
-            -m      enforce man mode
+            -m        enforce man mode
 
         All further arguments are passed to neovim.    But one has to add "--"
         if the first argument is an option in order to stop this script from
         interpeting it.
-        
+
         If "-" or no files are given stdin is read.
-        
+
         In auto mode, if the cumulative length of all file arguments is
         smaller than the terminal size, cat mode is used, otherwise pager mode
         is used.    If any none file argument (neovim option) is given pager
@@ -43,17 +42,17 @@ EOF
 
 while getopts achpmv flag; do
     case $flag in
-        a) mode='auto';;
-        c) mode='cat';;
-        h) usage; description; exit;;
-        p) mode='pager';;
-        m) mode='man';;
+        a) mode='auto' ;;
+        c) mode='cat' ;;
+        h) usage; description; exit ;;
+        p) mode='pager' ;;
+        m) mode='man' ;;
         v)
             version=v0.10.4
             echo "$name $version"
             exit
             ;;
-        *) usage >&2; exit 2;;
+        *) usage >&2; exit 2 ;;
     esac
 done
 
@@ -121,9 +120,9 @@ else
     )
 
     if [[ $mode == 'cat' || $mode == 'auto' ]]; then
-		if [[ $(cat "${files[@]}" | wc -l) -le $(tput lines) ]]; then
+        if [[ $(cat "${files[@]}" | wc -l) -le $(tput lines) ]]; then
             args1+=(--headless)
-		fi
+        fi
     fi
 
     $nvim "${args1[@]}" "${files[@]}" "$@" "${args2[@]}" </dev/tty

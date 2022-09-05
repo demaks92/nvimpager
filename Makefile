@@ -9,20 +9,19 @@ BUSTED = busted
 	sed 's#^RUNTIME=.*$$#RUNTIME='"'$(RUNTIME)'"'#;s#version=.*$$#version=$(VERSION)#' < $< > $@
 	chmod +x $@
 
-install: nvimpager.configured nvimpager.1
+install: nvimpager.configured
 	mkdir -p $(DESTDIR)$(PREFIX)/bin \
 	  $(DESTDIR)$(PREFIX)/share/man/man1 \
 	  $(DESTDIR)$(PREFIX)/share/zsh/site-functions
 	install nvimpager.configured $(DESTDIR)$(PREFIX)/bin/nvimpager
-	install -m 644 nvimpager.1 $(DESTDIR)$(PREFIX)/share/man/man1
 	install -m 644 scripts/_nvimpager $(DESTDIR)$(PREFIX)/share/zsh/site-functions
 uninstall:
 	$(RM) $(PREFIX)/bin/nvimpager \
-      $(PREFIX)/share/man/man1/nvimpager.1 \
       $(PREFIX)/share/zsh/site-functions/_nvimpager
 
 nvimpager.1: SOURCE_DATE_EPOCH = $(shell git log -1 --no-show-signature --pretty="%ct" 2>/dev/null || echo 1636921311)
 nvimpager.1: doc/nvimpager.md
+	install -m 644 nvimpager.1 $(DESTDIR)$(PREFIX)/share/man/man1
 	sed '1s/$$/ "nvimpager $(VERSION)"/' $< | scdoc > $@
 
 TYPE = minor
